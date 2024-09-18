@@ -1,22 +1,19 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/alisherkarim/cli-chat-server/api/v1/routes"
+	v1Routes "github.com/alisherkarim/cli-chat-server/api/v1/routes"
+	"github.com/alisherkarim/cli-chat-server/db"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 )
 
-func handleJoin(responseWriter http.ResponseWriter, req *http.Request) {
-	fmt.Print(req)
-	data, _ := json.Marshal("Hello from server")
-	responseWriter.Write(data)
+type Env struct {
+	db db.Storage
 }
 
 func initRouter() *chi.Mux {
@@ -38,15 +35,24 @@ func main()  {
 		log.Fatal(".env no loaded correctly")
 	}
 
+	
+	db, err := db.NewPostgreStorage()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	
+	if err := db.Init(); err != nil {
+		log.Fatal(err.Error())
+	}
+	
 	portString := os.Getenv("PORT")
 	if portString == "" {
 		log.Fatal("PORT not loaded")
 	}
 
 	indexRouter := initRouter()
-
 	// router for paths /v1/*
-	routes.RegisterRoutes(indexRouter)
+	v1Routes.RegisterRoutes(indexRouter, db)
 
 	server := &http.Server{
 		Addr: ":" + portString,
