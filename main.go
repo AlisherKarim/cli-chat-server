@@ -52,7 +52,7 @@ func main()  {
 
 	indexRouter := initRouter()
 	// router for paths /v1/*
-	v1Routes.RegisterRoutes(indexRouter, db)
+	indexRouter.Mount("/api/v1", v1Routes.NewRouter(db));
 
 	server := &http.Server{
 		Addr: ":" + portString,

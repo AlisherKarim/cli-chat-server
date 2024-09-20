@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func RegisterRoutes(router *chi.Mux, storage db.Storage) {
+func NewRouter(storage db.Storage) *chi.Mux {
 	v1Router := chi.NewRouter()
 	handler := handlers.NewHandler(storage)
 
@@ -21,10 +21,9 @@ func RegisterRoutes(router *chi.Mux, storage db.Storage) {
 			handler.GetUserById(w, r)
 		}
 	})
-	v1Router.Post("/users", handler.CreateUser)
 
-	RegisterAuthRoutes(v1Router)
+	v1Router.Mount("/auth", NewAuthRouter(handler))
 
-	router.Mount("/api/v1", v1Router)
+	return v1Router
 }
 

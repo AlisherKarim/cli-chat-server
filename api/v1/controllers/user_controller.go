@@ -15,8 +15,8 @@ func NewUserController(storage db.Storage) *UserController {
 	return &UserController{storage: storage}
 }
 
-func (userController *UserController) CreateUser(name, email string) (models.User, error) {
-	user, err := userController.storage.CreateUser(name, email)
+func (userController *UserController) CreateUser(name, email, password_hash string) (models.User, error) {
+	user, err := userController.storage.CreateUser(name, email, "")
 	if err != nil {
 		return models.User{}, err
 	}

@@ -5,11 +5,11 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func RegisterAuthRoutes(r *chi.Mux) {
+func NewAuthRouter(main_handler *handlers.MainHandler) *chi.Mux {
 	authRoutes := chi.NewRouter()
 
-	authRoutes.Post("/login", handlers.Login)
-	authRoutes.Post("/signup", handlers.SignUp)
+	authRoutes.Post("/login", main_handler.Login)
+	authRoutes.Post("/signup", main_handler.SignUp)
 
-	r.Mount("/auth", authRoutes)
+	return authRoutes
 }

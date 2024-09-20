@@ -15,12 +15,11 @@ type CreateUserRequest struct {
 }
 
 type MainHandler struct {
-	storage db.Storage
 	userController controllers.UserController
 }
 
 func NewHandler(storage db.Storage) *MainHandler {
-	return &MainHandler{storage: storage, userController: *controllers.NewUserController(storage)}
+	return &MainHandler{userController: *controllers.NewUserController(storage)}
 }
 
 func (mainHandler *MainHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
@@ -50,28 +49,4 @@ func (mainHandler *MainHandler) GetUsers(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	response.RespondWithJson(w, http.StatusOK, users)
-}
-
-func (mainHandler *MainHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	req := &CreateUserRequest{}
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		response.RespondWithError(w, http.StatusBadRequest, "Bad Request")
-		return
-	}
-	user, err := mainHandler.userController.CreateUser(req.Username, req.Email)
-	if err != nil {
-		errorMessage, err := json.Marshal(struct {
-			Message string `json:"message"`
-		}{
-			Message: err.Error(),
-		})
-
-		if err != nil {
-			response.RespondWithError(w, http.StatusInternalServerError, err.Error())
-		}
-
-		response.RespondWithError(w, http.StatusInternalServerError, string(errorMessage))
-		return
-	}
-	response.RespondWithJson(w, http.StatusOK, user)
 }
