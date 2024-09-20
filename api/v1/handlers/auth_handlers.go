@@ -27,6 +27,7 @@ func (mainHandler *MainHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		response.RespondWithError(w, http.StatusUnauthorized, err)
+		return
 	}
 
 	expiresAt := time.Now().Add(time.Hour).Unix()
@@ -35,6 +36,7 @@ func (mainHandler *MainHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
 		resp := "Invalid login credentials. Please try again"
 		response.RespondWithErrorMsg(w, http.StatusUnauthorized, resp)
+		return
 	}
 
 	tk := &models.Token{
