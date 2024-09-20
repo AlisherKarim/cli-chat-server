@@ -17,9 +17,9 @@ func RespondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(data)
 }
 
-func RespondWithError(w http.ResponseWriter, code int, msg string) {
+func RespondWithError(w http.ResponseWriter, code int, err error) {
 	if code >= http.StatusInternalServerError { // Use constants from the http package
-		log.Printf("Something wrong on our end: %s\n", msg)
+		log.Printf("Something wrong on our end: %s\n", err.Error())
 	}
 
 	type errorStruct struct {
@@ -27,6 +27,6 @@ func RespondWithError(w http.ResponseWriter, code int, msg string) {
 	}
 
 	RespondWithJson(w, code, errorStruct{
-		Error: msg,
+		Error: err.Error(),
 	})
 }

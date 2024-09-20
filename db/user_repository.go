@@ -9,16 +9,20 @@ import (
 
 type userStorage interface {
 	GetUserById(id string) (models.User, error)
+	GetUserByUsername(username string) (models.User, error)
 	GetUsers() ([]models.User, error)
 	CreateUser(name, email, password_hash string) (models.User, error)
 }
 
 func (pStorage *PostgresStorage) createUsersTable() error {
-	query := `create table if not exists users (
-		USER_ID SERIAL PRIMARY KEY,
-		USERNAME VARCHAR(50) UNIQUE NOT NULL,
-		EMAIL VARCHAR(50) UNIQUE NOT NULL
-	)`
+	query := `
+	CREATE TABLE IF NOT EXISTS users (
+    user_id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);`
 	_, err := pStorage.db.Exec(query)
 	if err != nil {
 		return err
@@ -27,7 +31,7 @@ func (pStorage *PostgresStorage) createUsersTable() error {
 }
 
 func (pStorage *PostgresStorage) GetUserById(id string) (models.User, error) {
-	query := `SELECT USER_ID, USERNAME, EMAIL FROM users WHERE USER_ID = $1;`
+	query := `SELECT user_id, username, email FROM users WHERE user_id = $1;`
 	row := pStorage.db.QueryRow(query, id)
 	user := models.User{}
 	if err := row.Scan(&user.Id, &user.Username, &user.Email); err != nil {
@@ -40,8 +44,22 @@ func (pStorage *PostgresStorage) GetUserById(id string) (models.User, error) {
 	return user, nil
 }
 
+func (pStorage *PostgresStorage) GetUserByUsername(username string) (models.User, error) {
+	query := `SELECT user_id, username, email FROM users WHERE username = $1;`
+	row := pStorage.db.QueryRow(query, username)
+	user := models.User{}
+	if err := row.Scan(&user.Id, &user.Username, &user.Email); err != nil {
+		if err == sql.ErrNoRows {
+				return models.User{}, fmt.Errorf("user with id %s not found", username)
+		}
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
 func (pStorage *PostgresStorage) GetUsers() ([]models.User, error) {
-	query := `SELECT USER_ID, USERNAME, EMAIL FROM users;`
+	query := `SELECT user_id, username, email FROM users;`
 	rows, err := pStorage.db.Query(query)
 	if err != nil {
 		return []models.User{}, err
@@ -62,9 +80,10 @@ func (pStorage *PostgresStorage) GetUsers() ([]models.User, error) {
 }
 
 func (pStorage *PostgresStorage) CreateUser(name, email, password_hash string) (models.User, error) {
-	query := `INSERT INTO users (username, email)
-						VALUES ($1, $2);`
-	_, err := pStorage.db.Exec(query, name, email)
+	query := `INSERT INTO users (username, email, password)
+						VALUES ($1, $2, $3);`
+
+	_, err := pStorage.db.Exec(query, name, email, password_hash)
 	if err != nil {
 		return models.User{}, err
 	}
