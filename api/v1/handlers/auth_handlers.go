@@ -2,20 +2,63 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/alisherkarim/cli-chat-server/api/v1/types"
+	"github.com/alisherkarim/cli-chat-server/models"
 	"github.com/alisherkarim/cli-chat-server/pkg/response"
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
-
+var jwt_secret = os.Getenv("JWT_SECRET")
 
 func (mainHandler *MainHandler) Login(w http.ResponseWriter, r *http.Request) {
-	response.RespondWithJson(w, http.StatusOK, "Login success")
+	req := &types.LoginRequestBody{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		response.RespondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	user, err := mainHandler.userController.GetUserByUsername(req.Username)
+
+	if err != nil {
+		response.RespondWithError(w, http.StatusUnauthorized, err)
+	}
+
+	expiresAt := time.Now().Add(time.Hour).Unix()
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword { //Password does not match!
+		resp := "Invalid login credentials. Please try again"
+		response.RespondWithErrorMsg(w, http.StatusUnauthorized, resp)
+	}
+
+	tk := &models.Token{
+		UserId: string(user.Id),
+		Username:   user.Username,
+		Email:  user.Email,
+		StandardClaims: &jwt.StandardClaims{
+			ExpiresAt: expiresAt,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	tokenString, err := token.SignedString([]byte(jwt_secret))
+	if err != nil {
+		log.Println(err.Error())
+		resp := "Something went wrong on out end. Please try again"
+		response.RespondWithErrorMsg(w, http.StatusInternalServerError, resp)
+		return;
+	}
+
+	response.RespondWithJson(w, http.StatusOK, types.LoginResponseBody{User: user, AccessToken: tokenString})
 }
 
-func (mainHandler *MainHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+func (mainHandler *MainHandler) Register(w http.ResponseWriter, r *http.Request) {
 	req := &types.RegisterRequestBody{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		response.RespondWithError(w, http.StatusBadRequest, err)

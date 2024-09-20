@@ -38,3 +38,11 @@ func (userController *UserController) GetUserById(id string) (models.User, error
 	}
 	return user, nil
 }
+
+func (userController *UserController) GetUserByUsername(username string) (models.User, error) {
+	user, err := userController.storage.GetUserByUsername(username)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}

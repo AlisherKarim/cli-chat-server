@@ -9,7 +9,7 @@ func NewAuthRouter(main_handler *handlers.MainHandler) *chi.Mux {
 	authRoutes := chi.NewRouter()
 
 	authRoutes.Post("/login", main_handler.Login)
-	authRoutes.Post("/register", main_handler.SignUp)
+	authRoutes.Post("/register", main_handler.Register)
 
 	return authRoutes
 }

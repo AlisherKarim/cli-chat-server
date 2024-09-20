@@ -45,10 +45,10 @@ func (pStorage *PostgresStorage) GetUserById(id string) (models.User, error) {
 }
 
 func (pStorage *PostgresStorage) GetUserByUsername(username string) (models.User, error) {
-	query := `SELECT user_id, username, email FROM users WHERE username = $1;`
+	query := `SELECT user_id, username, email, password FROM users WHERE username = $1;`
 	row := pStorage.db.QueryRow(query, username)
 	user := models.User{}
-	if err := row.Scan(&user.Id, &user.Username, &user.Email); err != nil {
+	if err := row.Scan(&user.Id, &user.Username, &user.Email, &user.Password); err != nil {
 		if err == sql.ErrNoRows {
 				return models.User{}, fmt.Errorf("user with id %s not found", username)
 		}

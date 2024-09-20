@@ -30,3 +30,17 @@ func RespondWithError(w http.ResponseWriter, code int, err error) {
 		Error: err.Error(),
 	})
 }
+
+func RespondWithErrorMsg(w http.ResponseWriter, code int, msg string) {
+	if code >= http.StatusInternalServerError { // Use constants from the http package
+		log.Printf("Something wrong on our end: %s\n", msg)
+	}
+
+	type errorStruct struct {
+		Error string `json:"error"`
+	}
+
+	RespondWithJson(w, code, errorStruct{
+		Error: msg,
+	})
+}

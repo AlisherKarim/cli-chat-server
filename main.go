@@ -34,7 +34,6 @@ func main()  {
 	if err != nil {
 		log.Fatal(".env no loaded correctly")
 	}
-
 	
 	db, err := db.NewPostgreStorage()
 	if err != nil {
