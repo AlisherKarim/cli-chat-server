@@ -4,7 +4,7 @@ import "github.com/dgrijalva/jwt-go"
 
 type User struct {
 	Username string `json:"username"`
-	Id int `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 	Email string `json:"email"`
 	Password string `json:"-"`
 }

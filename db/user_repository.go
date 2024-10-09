@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/alisherkarim/cli-chat-server/models"
+	"github.com/google/uuid"
 )
 
 type userStorage interface {
@@ -17,16 +18,18 @@ type userStorage interface {
 func (pStorage *PostgresStorage) createUsersTable() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS users (
-    user_id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) UNIQUE NOT NULL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );`
 	_, err := pStorage.db.Exec(query)
+	
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -62,31 +65,31 @@ func (pStorage *PostgresStorage) GetUsers() ([]models.User, error) {
 	query := `SELECT user_id, username, email FROM users;`
 	rows, err := pStorage.db.Query(query)
 	if err != nil {
-		return []models.User{}, err
+			return nil, fmt.Errorf("failed to get users: %w", err)
 	}
 	defer rows.Close()
-	users := []models.User{}
-	
+
+	var users []models.User
 	for rows.Next() {
-		user := models.User{}
-		err := rows.Scan(&user.Id, &user.Username, &user.Email)
-		if err != nil {
-			return []models.User{}, err
-		}
-		users = append(users, user)
+			user := models.User{}
+			err := rows.Scan(&user.Id, &user.Username, &user.Email)
+			if err != nil {
+					return nil, fmt.Errorf("failed to scan user: %w", err)
+			}
+			users = append(users, user)
 	}
 
 	return users, nil
 }
 
-func (pStorage *PostgresStorage) CreateUser(name, email, password_hash string) (models.User, error) {
-	query := `INSERT INTO users (username, email, password)
-						VALUES ($1, $2, $3);`
+func (pStorage *PostgresStorage) CreateUser(name, email, passwordHash string) (models.User, error) {
+    userId := uuid.New().String()
+    query := `INSERT INTO users (user_id, username, email, password) VALUES ($1, $2, $3, $4);`
 
-	_, err := pStorage.db.Exec(query, name, email, password_hash)
-	if err != nil {
-		return models.User{}, err
-	}
+    _, err := pStorage.db.Exec(query, userId, name, email, passwordHash)
+    if err != nil {
+        return models.User{}, fmt.Errorf("failed to create user: %w", err)
+    }
 
-	return models.User{Username: name, Email: email}, nil
+    return models.User{Id: userId, Username: name, Email: email}, nil
 }

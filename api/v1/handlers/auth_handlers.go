@@ -79,5 +79,5 @@ func (mainHandler *MainHandler) Register(w http.ResponseWriter, r *http.Request)
 		response.RespondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	response.RespondWithJson(w, http.StatusOK, user)
+	response.RespondWithJson(w, http.StatusCreated, user)
 }
