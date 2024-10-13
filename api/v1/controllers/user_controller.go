@@ -6,7 +6,6 @@ import (
 )
 
 
-
 type UserController struct {
 	storage db.Storage
 }
