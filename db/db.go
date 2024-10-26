@@ -11,6 +11,7 @@ import (
 type Storage interface {
 	userStorage
 	chatRoomStorage
+	roomUsersStorage
 }
 
 type PostgresStorage struct {
@@ -27,7 +28,7 @@ func NewPostgreStorage() (*PostgresStorage, error) {
 	)
 
 	var connStr string = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-	host, port, user, password, dbname)
+		host, port, user, password, dbname)
 
 	dbObj, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -38,6 +39,13 @@ func NewPostgreStorage() (*PostgresStorage, error) {
 }
 
 func (pStorage *PostgresStorage) Init() error {
-	return pStorage.createUsersTable()
+	err := pStorage.createUsersTable()
+	if err != nil {
+		return err
+	}
+	err = pStorage.createRoomTable()
+	if err != nil {
+		return err
+	}
+	return pStorage.createRoomUsersTable()
 }
-

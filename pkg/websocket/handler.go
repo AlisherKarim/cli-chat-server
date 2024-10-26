@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -21,15 +20,5 @@ func HandleConnections(w http.ResponseWriter, r *http.Request) {
 			return
 	}
 	defer conn.Close()
-
-	data, err := json.Marshal("Hello from server")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		log.Println(err)
-		return
-	}
+	
 }

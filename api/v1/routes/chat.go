@@ -10,6 +10,7 @@ func NewChatRouter() *chi.Mux {
 	chatRouter := chi.NewRouter();
 
 	chatRouter.HandleFunc("/connect", websocket.HandleConnections)
+	// chatRouter.HandleFunc("/", )
 	// chatRouter.Post("/create")
 
 	return chatRouter

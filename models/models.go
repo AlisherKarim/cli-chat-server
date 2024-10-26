@@ -18,5 +18,5 @@ type Token struct {
 
 type ChatRoom struct {
 	Id string `json:"id"`
-	Users []User `json:"users"`
+	Name string `json:"name"`
 }
