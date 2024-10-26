@@ -7,8 +7,12 @@ import (
 
 type MainHandler struct {
 	userController controllers.UserController
+	roomController controllers.RoomController
 }
 
 func NewHandler(storage db.Storage) *MainHandler {
-	return &MainHandler{userController: *controllers.NewUserController(storage)}
+	return &MainHandler{
+		userController: *controllers.NewUserController(storage),
+		roomController: *controllers.NewRoomController(storage),
+	}
 }

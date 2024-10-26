@@ -23,7 +23,7 @@ func NewRouter(storage db.Storage) *chi.Mux {
 	})
 
 	v1Router.Mount("/auth", NewAuthRouter(handler))
-	v1Router.Mount("/chats", NewChatRouter())
+	v1Router.Mount("/chats", NewChatRouter(handler))
 
 	return v1Router
 }

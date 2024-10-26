@@ -1,4 +1,6 @@
-package websocket
+package ws
+
+import "log"
 
 // Hub maintains the set of active clients and broadcasts messages to them.
 type Hub struct {
@@ -30,9 +32,16 @@ func (h *Hub) Run() {
                 close(client.Send)
             }
         case message := <-h.Broadcast:
+            processedMessage, err := ProcessMessage(message)
+
+            if err != nil {
+                log.Printf("error happened whil processing message: %v", err)
+                return
+            }
+
             for client := range h.Clients {
                 select {
-                case client.Send <- message:
+                case client.Send <- []byte(processedMessage.Content):
                 default:
                     close(client.Send)
                     delete(h.Clients, client)
