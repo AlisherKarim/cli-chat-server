@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,8 +17,23 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+
+type RoomRequest struct {
+	Name string `json:"name"`
+}
+
 func (mainHandler *MainHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
-	id, err := mainHandler.roomController.AddRoom()
+	var req RoomRequest
+
+	// Parse JSON request body
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("error decoding request body: %v", err)
+		response.RespondWithErrorMsg(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	// Use the parsed name
+	id, err := mainHandler.roomController.AddRoom(req.Name)
 	if err != nil {
 		log.Printf("error: %v", err)
 		response.RespondWithErrorMsg(w, 500, "server error")
@@ -39,6 +55,21 @@ func (mainHandler *MainHandler) HandleJoin(w http.ResponseWriter, r *http.Reques
 	
 }
 
+func (mainHandler *MainHandler) HandleGetRooms(w http.ResponseWriter, r *http.Request) {
+	rooms, err := mainHandler.roomController.GetRooms()
+	if err != nil {
+		response.RespondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// return in format {"rooms": [ {"id": "123", "name": "friends room"} ]}
+	resp := map[string]interface{}{
+		"rooms": rooms,
+	}
+
+	response.RespondWithJson(w, http.StatusOK, resp)
+}
+
 func (mainHandler *MainHandler) HandleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 	log.Println("handle web socket connections")
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -50,7 +81,7 @@ func (mainHandler *MainHandler) HandleWebSocketConnection(w http.ResponseWriter,
 	
 	id := chi.URLParam(r, "id")
 	fmt.Println(id)
-	hub, err := mainHandler.roomController.GetRoom(id)
+	chatRoom, err := mainHandler.roomController.GetRoom(id)
 	if err != nil {
 		log.Printf("error: %v", err)
 		conn.Close()
@@ -61,12 +92,13 @@ func (mainHandler *MainHandler) HandleWebSocketConnection(w http.ResponseWriter,
 	// add client to the hub
 
 	client := ws.Client{
-		Hub: hub,
+		Hub: chatRoom.Hub,
 		Conn: conn,
 		Send: make(chan []byte),
 	}
-	hub.Register <- &client
+	chatRoom.Hub.Register <- &client
 
 	go client.WritePump()
+	client.Conn.WriteMessage(websocket.TextMessage, []byte("You were connected to room " + chatRoom.DataBaseModel.Name))
 	client.ReadPump()
 }

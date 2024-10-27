@@ -56,9 +56,29 @@ func (pStorage *PostgresStorage) GetRoom(id string) (models.ChatRoom, error) {
 		return models.ChatRoom{}, err
 	}
 
-	return models.ChatRoom{}, nil
+	return room, nil
 }
 
 func (pStorage *PostgresStorage) GetRooms() ([]models.ChatRoom, error) {
-	return []models.ChatRoom{}, nil
+	query := `SELECT room_id, name FROM rooms;`
+	rows, err := pStorage.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve rooms: %w", err)
+	}
+	defer rows.Close()
+
+	var rooms []models.ChatRoom
+	for rows.Next() {
+		var room models.ChatRoom
+		if err := rows.Scan(&room.Id, &room.Name); err != nil {
+			return nil, fmt.Errorf("failed to scan room: %w", err)
+		}
+		rooms = append(rooms, room)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error encountered during rows iteration: %w", err)
+	}
+
+	return rooms, nil
 }

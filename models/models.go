@@ -17,6 +17,6 @@ type Token struct {
 }
 
 type ChatRoom struct {
-	Id string `json:"id"`
+	Id string `json:"room_id"`
 	Name string `json:"name"`
 }
