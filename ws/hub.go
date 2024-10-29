@@ -32,7 +32,9 @@ func (h *Hub) Run() {
                 close(client.Send)
             }
         case message := <-h.Broadcast:
-            processedMessage, err := ProcessMessage(message)
+            log.Printf("new message: %s", message)
+            log.Printf("send to: %d hubs", len(h.Clients))
+            _, err := ProcessMessage(message)
 
             if err != nil {
                 log.Printf("error happened whil processing message: %v", err)
@@ -41,7 +43,7 @@ func (h *Hub) Run() {
 
             for client := range h.Clients {
                 select {
-                case client.Send <- []byte(processedMessage.Content):
+                case client.Send <- []byte(message):
                 default:
                     close(client.Send)
                     delete(h.Clients, client)

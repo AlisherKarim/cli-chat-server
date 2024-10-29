@@ -15,6 +15,9 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 
@@ -99,6 +102,6 @@ func (mainHandler *MainHandler) HandleWebSocketConnection(w http.ResponseWriter,
 	chatRoom.Hub.Register <- &client
 
 	go client.WritePump()
-	client.Conn.WriteMessage(websocket.TextMessage, []byte("You were connected to room " + chatRoom.DataBaseModel.Name))
+	// client.Conn.WriteMessage(websocket.TextMessage, []byte("You were connected to room " + chatRoom.DataBaseModel.Name))
 	client.ReadPump()
 }
